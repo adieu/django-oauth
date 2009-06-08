@@ -393,7 +393,7 @@ class OAuthServer(object):
         if not valid_sig:
             key, base = signature_method.build_signature_base_string(oauth_request, consumer, token)
             raise OAuthError('Invalid signature. Expected signature base string: %s' % base)
-        built = signature_method.build_signature(oauth_request, consumer, token)
+        # built = signature_method.build_signature(oauth_request, consumer, token)
 
     def _check_timestamp(self, timestamp):
         # verify that timestamp is recentish
