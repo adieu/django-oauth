@@ -535,42 +535,69 @@ class OAuthSignatureMethod_RSA_SHA1(OAuthSignatureMethod):
     def get_name(self):
         return 'RSA-SHA1'
 
-    @property
-    def public_cert(self):
-        """
-        The public certificate used for validating signatures.
-
-        *An implementation needs to provide this.*
-
-        """
+    def _fetch_public_cert(self, oauth_request):
+        # not implemented yet, ideas are:
+        # (1) do a lookup in a table of trusted certs keyed off of consumer
+        # (2) fetch via http using a url provided by the requester
+        # (3) some sort of specific discovery code based on request
+        #
+        # either way should return a string representation of the certificate
         raise NotImplementedError
 
-    @property
-    def private_cert(self):
-        """
-        The private certificate used for signing requests.
-
-        *An implementation needs to provide this.*
-
-        """
+    def _fetch_private_cert(self, oauth_request):
+        # not implemented yet, ideas are:
+        # (1) do a lookup in a table of trusted certs keyed off of consumer
+        #
+        # either way should return a string representation of the certificate
         raise NotImplementedError
 
     def build_signature_base_string(self, oauth_request, consumer, token):
         sig = (
-            escape(oauth_request.get_normalized_http_method()),
-            escape(oauth_request.get_normalized_http_url()),
-            escape(oauth_request.get_normalized_parameters()),
+            oauth.escape(oauth_request.get_normalized_http_method()),
+            oauth.escape(oauth_request.get_normalized_http_url()),
+            oauth.escape(oauth_request.get_normalized_parameters()),
         )
-
-        key = '%s&' % escape(consumer.secret)
-        if token:
-            key += escape(token.secret)
+        key = ''
         raw = '&'.join(sig)
         return key, raw
 
     def build_signature(self, oauth_request, consumer, token):
-        key, raw = self.build_signature_base_string(oauth_request, consumer, token)
-        return key
+        import binascii
+        from tlslite.utils import keyfactory
+        key, base_string = self.build_signature_base_string(oauth_request,
+                                                            consumer,
+                                                            token)
+
+        # Fetch the private key cert based on the request
+        cert = self._fetch_private_cert(oauth_request)
+
+        # Pull the private key from the certificate
+        privatekey = keyfactory.parsePrivateKey(cert)
+
+        # Convert base_string to bytes
+        #base_string_bytes = cryptomath.createByteArraySequence(base_string)
+
+        # Sign using the key
+        signed = privatekey.hashAndSign(base_string)
+
+      return binascii.b2a_base64(signed)[:-1]
 
     def check_signature(self, oauth_request, consumer, token, signature):
-        return True
+        import base64
+        from tlslite.utils import keyfactory
+        decoded_sig = base64.b64decode(signature);
+
+        key, base_string = self.build_signature_base_string(oauth_request,
+                                                            consumer,
+                                                            token)
+
+        # Fetch the public key cert based on the request
+        cert = self._fetch_public_cert(oauth_request)
+
+        # Pull the public key from the certificate
+        publickey = keyfactory.parsePEMKey(cert, public=True)
+
+        # Check the signature
+        ok = publickey.hashAndVerify(decoded_sig, base_string)
+
+        return ok

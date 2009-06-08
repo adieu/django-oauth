@@ -7,6 +7,14 @@ from django.http import HttpResponse
 from stores import DataStore
 
 OAUTH_REALM_KEY_NAME = 'OAUTH_REALM_KEY_NAME'
+OAUTH_RSA_PRIVATE_KEY = 'OAUTH_RSA_PRIVATE_KEY'
+OAUTH_RSA_PUBLIC_KEY = 'OAUTH_RSA_PUBLIC_KEY'
+
+class DjangoOAuthSignatureMethod_RSA_SHA1(OAuthSignatureMethod_RSA_SHA1):
+    def _fetch_public_cert(self, oauth_request):
+        return getattr(settings, OAUTH_RSA_PUBLIC_KEY, '')
+    def _fetch_private_cert(self, oauth_request):
+        return getattr(settings, OAUTH_RSA_PRIVATE_KEY, '')
 
 def initialize_server_request(request):
     """Shortcut for initialization."""
@@ -27,7 +35,7 @@ def initialize_server_request(request):
         oauth_server = OAuthServer(DataStore(oauth_request))
         oauth_server.add_signature_method(OAuthSignatureMethod_PLAINTEXT())
         oauth_server.add_signature_method(OAuthSignatureMethod_HMAC_SHA1())
-        oauth_server.add_signature_method(OAuthSignatureMethod_RSA_SHA1())
+        oauth_server.add_signature_method(DjangoOAuthSignatureMethod_RSA_SHA1())
     else:
         oauth_server = None
     return oauth_server, oauth_request
