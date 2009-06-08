@@ -1,5 +1,5 @@
 from oauth.oauth import OAuthRequest, OAuthServer, build_authenticate_header,\
-    OAuthSignatureMethod_PLAINTEXT, OAuthSignatureMethod_HMAC_SHA1
+    OAuthSignatureMethod, OAuthSignatureMethod_PLAINTEXT, OAuthSignatureMethod_HMAC_SHA1, OAuthSignatureMethod_RSA_SHA1
 
 from django.conf import settings
 from django.http import HttpResponse
@@ -27,6 +27,7 @@ def initialize_server_request(request):
         oauth_server = OAuthServer(DataStore(oauth_request))
         oauth_server.add_signature_method(OAuthSignatureMethod_PLAINTEXT())
         oauth_server.add_signature_method(OAuthSignatureMethod_HMAC_SHA1())
+        oauth_server.add_signature_method(OAuthSignatureMethod_RSA_SHA1())
     else:
         oauth_server = None
     return oauth_server, oauth_request

@@ -529,3 +529,48 @@ class OAuthSignatureMethod_PLAINTEXT(OAuthSignatureMethod):
     def build_signature(self, oauth_request, consumer, token):
         key, raw = self.build_signature_base_string(oauth_request, consumer, token)
         return key
+
+class OAuthSignatureMethod_RSA_SHA1(OAuthSignatureMethod):
+
+    def get_name(self):
+        return 'RSA-SHA1'
+
+    @property
+    def public_cert(self):
+        """
+        The public certificate used for validating signatures.
+
+        *An implementation needs to provide this.*
+
+        """
+        raise NotImplementedError
+
+    @property
+    def private_cert(self):
+        """
+        The private certificate used for signing requests.
+
+        *An implementation needs to provide this.*
+
+        """
+        raise NotImplementedError
+
+    def build_signature_base_string(self, oauth_request, consumer, token):
+        sig = (
+            escape(oauth_request.get_normalized_http_method()),
+            escape(oauth_request.get_normalized_http_url()),
+            escape(oauth_request.get_normalized_parameters()),
+        )
+
+        key = '%s&' % escape(consumer.secret)
+        if token:
+            key += escape(token.secret)
+        raw = '&'.join(sig)
+        return key, raw
+
+    def build_signature(self, oauth_request, consumer, token):
+        key, raw = self.build_signature_base_string(oauth_request, consumer, token)
+        return key
+
+    def check_signature(self, oauth_request, consumer, token, signature):
+        return True
