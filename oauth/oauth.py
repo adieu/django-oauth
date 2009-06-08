@@ -553,9 +553,9 @@ class OAuthSignatureMethod_RSA_SHA1(OAuthSignatureMethod):
 
     def build_signature_base_string(self, oauth_request, consumer, token):
         sig = (
-            oauth.escape(oauth_request.get_normalized_http_method()),
-            oauth.escape(oauth_request.get_normalized_http_url()),
-            oauth.escape(oauth_request.get_normalized_parameters()),
+            escape(oauth_request.get_normalized_http_method()),
+            escape(oauth_request.get_normalized_http_url()),
+            escape(oauth_request.get_normalized_parameters()),
         )
         key = ''
         raw = '&'.join(sig)
@@ -585,7 +585,8 @@ class OAuthSignatureMethod_RSA_SHA1(OAuthSignatureMethod):
     def check_signature(self, oauth_request, consumer, token, signature):
         import base64
         from tlslite.utils import keyfactory
-        decoded_sig = base64.b64decode(signature);
+        from tlslite.utils.cryptomath import stringToBytes
+        decoded_sig = stringToBytes(base64.b64decode(signature))
 
         key, base_string = self.build_signature_base_string(oauth_request,
                                                             consumer,
