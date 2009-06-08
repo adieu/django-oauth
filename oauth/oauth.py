@@ -580,7 +580,7 @@ class OAuthSignatureMethod_RSA_SHA1(OAuthSignatureMethod):
         # Sign using the key
         signed = privatekey.hashAndSign(base_string)
 
-      return binascii.b2a_base64(signed)[:-1]
+        return binascii.b2a_base64(signed)[:-1]
 
     def check_signature(self, oauth_request, consumer, token, signature):
         import base64
